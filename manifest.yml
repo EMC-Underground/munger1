@@ -1,0 +1,8 @@
+---
+applications:
+- name: sweeper
+  memory: 200MB
+  disk_quota: 200MB
+  domain: bellevuelab.isus.emc.com
+  no-route: true
+  command: node app.js
