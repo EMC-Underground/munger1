@@ -1,25 +1,22 @@
 var AWS = require( "aws-sdk" ),
+	ECS = require( "aws-sdk" ),
 	chalk = require( "chalk" ),
-	Q = require( "q" ),
-	config = require( "./config.json" ),
-	numWaits;
+	Q = require( "q" )
 
-AWS.config.loadFromPath(__dirname + '/config.json');
 
 // setup ECS config to point to Bellevue lab 
 var ECSconfig = {
   s3ForcePathStyle: true,
-  accessKeyId: 'ops-bot',
-  secretAccessKey: 'pvBNp1DbR4prHf6gW8IhtSLYcrGjZC2Q9LT2Z+TC',
   endpoint: new AWS.Endpoint('http://10.4.44.125:9020')
-}
-var ecs = new AWS.S3(ECSconfig)
-var s3 = new AWS.S3();
-
+};
 
 var getInstallBase = function() {
 	return new Promise(function(resolve, reject) {	
-		
+
+		ECS.config.loadFromPath(__dirname + '/ECSconfig.json');
+		var ecs = new ECS.S3(ECSconfig);
+		//AWS.config.update(config);
+	
         // get json data object from ECS bucket
         var params = {
 				Bucket: 'pacnwinstalls',
@@ -69,6 +66,9 @@ var postResults = function(insight) {
 			}
 			
 			console.log('insightBody = ' + JSON.stringify(insightBody));
+
+			AWS.config.loadFromPath(__dirname + '/AWSconfig.json');
+			var s3 = new AWS.S3();
 			
 			// put the data in the s3 bucket
 			var s3params = {
@@ -90,7 +90,7 @@ var postResults = function(insight) {
 			});										
 			console.log('done waiting');
 			
-		}, 3000);
+		}, 86400000); // loop through once every 24 hours
 
 	});
 };
