@@ -1,0 +1,24 @@
+{
+  "name": "munger1",
+  "version": "1.0.0",
+  "description": "Node microservice to pull in install base data, obtain an insight and then post that insight in simple lightweight JSON",
+  "main": "app.js",
+  "dependencies": {
+    "aws-sdk": "^2.3.10",
+    "chalk": "^1.1.3",
+    "q": "^1.4.1"
+  },  
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dly9014/munger1.git"
+  },
+  "author": "Dana Young",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dly9014/munger1/issues"
+  },
+  "homepage": "https://github.com/dly9014/munger1#readme"
+}

@@ -1,6 +1,6 @@
 ---
 applications:
-- name: sweeper
+- name: munger1
   memory: 200MB
   disk_quota: 200MB
   domain: bellevuelab.isus.emc.com
