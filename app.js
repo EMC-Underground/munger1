@@ -6,17 +6,39 @@ var AWS = require( "aws-sdk" ),
 	async = require( "async" ),
 	insight,
 	gdunFromList,
-	GDUNS = []; 
+	GDUNS = [],
+	productFamily = [
+		'Symmetrix',
+		'Connectrix',
+		'RecoverPoint',
+		'CLARiiON',
+		'Celerra',
+		'Data Domain',
+		'VMAX Family',
+		'VNX/VNXe Family',
+		'Centera',
+		'Isilon',
+		'Avamar',
+		'Xtrem'
+	];
 
 var ECSconfig = {
   s3ForcePathStyle: true,
   endpoint: new AWS.Endpoint('http://10.4.44.125:9020')
 };
 
-// launch the process
-cycleThru();
 
-function cycleThru() {
+
+// launch the process
+cycleThruProducts();
+
+function cycleThruProducts() {
+	for (var i = 0; i < productFamily.length; i++) {
+		cycleThru(productFamily[i])
+	}
+}
+
+function cycleThru(product) {
 
 	async.series([
 	
@@ -82,7 +104,7 @@ function cycleThru() {
 								var dataPayload = JSON.parse(data.Body);
 								//console.log('installBaseData.rows.length = ' + dataPayload.rows.length);
 								var productFamily = 'Symmetrix';
-								insight = getCount(productFamily, dataPayload); 
+								insight = getCount(product, dataPayload); 
 								callback(); // callback <<B1.1>>
 							}
 						});
@@ -103,7 +125,7 @@ function cycleThru() {
 						// put the data in the s3 bucket
 						var s3params = {
 								Bucket: 'emcalexa',
-								Key: gdun + '.insight1',
+								Key: gdun + '.' + product,
 								Body: JSON.stringify(insightBody),
 								ContentType: 'json'
 							};	
@@ -125,7 +147,9 @@ function cycleThru() {
 						setTimeout(function() {
 							console.log('wait period completed')
 							callback(); // callback <<B1.3>>
-						}, 654545); // 86400000 = loop through 1 every 24 hours, so for 132, wait 11 min between each to get all done in 24 hrs
+						}, 54545); // 86400000 = loop through 1 every 24 hours, so for 132 GDUNs x 12 products, wait
+									// 54545msec (about 1 min) between each to get all done in 24 hrs
+									
 					}
 				], function(err) { //This function gets called after the three tasks have called their "task callbacks"
 					if (err) console.log('Error processing GDUN=' + gdun + ': ' + err);
@@ -145,7 +169,7 @@ function cycleThru() {
 		if ( gdunFromList == GDUNS[GDUNS.length - 1] ) {
 			console.log('starting cycle again ***********************************************************************');
 			// restart the whole cycle again from the top
-			cycleThru();
+			cycleThruProducts();
 		}
 	});
 
