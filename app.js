@@ -130,7 +130,7 @@ function cycleThru(product) {
 						// put the data in the s3 bucket
 						var s3params = {
 								Bucket: 'emcalexa',
-								Key: gdun + '.' + product,
+								Key: gdun + '.' + productKey,
 								Body: JSON.stringify(insightBody),
 								ContentType: 'json'
 							};	
