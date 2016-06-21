@@ -103,7 +103,6 @@ function cycleThru(product) {
 								//console.log(data.Body.toString()); // note: Body is outputted as type buffer which is an array of bytes of the body 
 								var dataPayload = JSON.parse(data.Body);
 								//console.log('installBaseData.rows.length = ' + dataPayload.rows.length);
-								var productFamily = 'Symmetrix';
 								insight = getCount(product, dataPayload); 
 								callback(); // callback <<B1.1>>
 							}
@@ -121,6 +120,12 @@ function cycleThru(product) {
 
 						AWS.config.loadFromPath(__dirname + '/AWSconfig.json');
 						var s3 = new AWS.S3();
+						
+						var productKey = product;
+						
+						if (productKey == 'VNX/VNXe Family') {
+							productKey = 'VNX';
+						}
 						
 						// put the data in the s3 bucket
 						var s3params = {
