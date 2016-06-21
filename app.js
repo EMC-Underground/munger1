@@ -44,7 +44,7 @@ function cycleThru(product) {
 	
 		// Load list of GDUNs from ECS object
 		function(callback) { // callback <<A>>
-			console.log('getting list of GDUNS from ECS')
+			//console.log('getting list of GDUNS from ECS')
 			// setup ECS config to point to Bellevue lab 
 			ECS.config.loadFromPath(__dirname + '/ECSconfig.json'); // load ECS credentials
 			var ecs = new ECS.S3(ECSconfig);
@@ -62,7 +62,7 @@ function cycleThru(product) {
 				} else { // success					
 					//console.log(data.Body.toString()); // note: Body is outputted as type buffer which is an array of bytes of the body 
 					var dataPayload = JSON.parse(data.Body);
-					console.log('length = ' + dataPayload.length);
+					//console.log('length = ' + dataPayload.length);
 					
 					for (var i = 0; i < dataPayload.length; i++) {
 						GDUNS.push(dataPayload[i].gduns);
@@ -84,11 +84,11 @@ function cycleThru(product) {
 				
 					// Pull install base data from ECS 
 					function(callback) { // callback <<B1.1>>
-						console.log('getting data from ECS with GDUN: ' + gdun)
+						//console.log('getting data from ECS with GDUN: ' + gdun)
 						ECS.config.loadFromPath(__dirname + '/ECSconfig.json');
 						var ecs = new ECS.S3(ECSconfig);
 						var key = gdun + '.json';
-						console.log('key = ' + key)
+						//console.log('key = ' + key)
 					
 						// get json data object from ECS bucket
 						var params = {
@@ -150,9 +150,9 @@ function cycleThru(product) {
 					function(callback) { // callback <<B1.3>>
 						console.log('starting prescribed wait period...')
 						setTimeout(function() {
-							console.log('wait period completed')
+							//console.log('wait period completed')
 							callback(); // callback <<B1.3>>
-						}, 54545); // 86400000 = loop through 1 every 24 hours, so for 132 GDUNs x 12 products, wait
+						}, 1); // 86400000 = loop through 1 every 24 hours, so for 132 GDUNs x 12 products, wait
 									// 54545msec (about 1 min) between each to get all done in 24 hrs
 									
 					}
@@ -187,7 +187,7 @@ function getCount(productFamily, installBaseData) {
 			count++;
 		}
 	}
-	console.log('system count = ' + count);
+	//console.log('system count = ' + count);
 	return count;
 }
 
