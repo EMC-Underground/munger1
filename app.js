@@ -9,17 +9,17 @@ var AWS = require( "aws-sdk" ),
 	GDUNS = [],
 	productFamily = [
 		'Symmetrix',
-		'Connectrix',
-		'RecoverPoint',
-		'CLARiiON',
-		'Celerra',
-		'Data Domain',
-		'VMAX Family',
-		'VNX/VNXe Family',
-		'Centera',
-		'Isilon',
-		'Avamar',
-		'Xtrem'
+		'Connectrix'//,
+		// 'RecoverPoint',
+		// 'CLARiiON',
+		// 'Celerra',
+		// 'Data Domain',
+		// 'VMAX Family',
+		// 'VNX/VNXe Family',
+		// 'Centera',
+		// 'Isilon',
+		// 'Avamar',
+		// 'Xtrem'
 	];
 
 var ECSconfig = {
