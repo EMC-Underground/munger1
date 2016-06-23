@@ -152,7 +152,7 @@ function cycleThru(product) {
 						setTimeout(function() {
 							//console.log('wait period completed')
 							callback(); // callback <<B1.3>>
-						}, 1); // 86400000 = loop through 1 every 24 hours, so for 132 GDUNs x 12 products, wait
+						}, 1000); // 86400000 = loop through 1 every 24 hours, so for 132 GDUNs x 12 products, wait
 									// 54545msec (about 1 min) between each to get all done in 24 hrs
 									
 					}
@@ -171,11 +171,14 @@ function cycleThru(product) {
 	], function(err) { // This function gets called after the three tasks have called their "task callbacks" 
 		if (err) console.log('Error processing GDUN=' + gdun + ': ' + err);
 		
-		if ( gdunFromList == GDUNS[GDUNS.length - 1] ) {
-			console.log('starting cycle again ***********************************************************************');
+		//if ( gdunFromList == GDUNS[GDUNS.length - 1] ) {
+			//console.log('starting cycle again ***********************************************************************');
 			// restart the whole cycle again from the top
-			cycleThruProducts();
-		}
+			// setTimeout(function() {
+				// console.log('wait period completed: RESTARTING PROCESS ***********************************************')
+				// cycleThruProducts();
+			// }, 86400000); // 86400000 = loop through 1 every 24 hours, so for 132 GDUNs x 12 products, wait
+		//}
 	});
 
 }		
