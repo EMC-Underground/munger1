@@ -47,7 +47,8 @@ function cycleThru(product) {
 			// setup ECS config to point to Bellevue lab 
 			ECS.config.loadFromPath(__dirname + '/ECSconfig.json'); // load ECS credentials
 			var ecs = new ECS.S3(ECSconfig);
-			var key = 'PNWandNCAcustomers.json';
+			//var key = 'PNWandNCAcustomers.json';
+			var key = 'PNWandNCAcustomers-small.json';
 
 			// get json data object from ECS bucket
 			var params = {
