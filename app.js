@@ -8,8 +8,8 @@ var AWS = require( "aws-sdk" ),
 	gdunFromList,
 	GDUNS = [],
 	productFamily = [
-		'Symmetrix',
-		'Connectrix'//,
+		'Symmetrix'//,
+		//'Connectrix',
 		// 'RecoverPoint',
 		// 'CLARiiON',
 		// 'Celerra',
@@ -26,7 +26,6 @@ var ECSconfig = {
   s3ForcePathStyle: true,
   endpoint: new AWS.Endpoint('http://10.4.44.125:9020')
 };
-
 
 
 // launch the process
