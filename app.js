@@ -6,7 +6,6 @@ var AWS = require( "aws-sdk" ),
 	async = require( "async" ),
 	insight,
 	gdunFromList,
-	productFromList,
 	productCounter = 0,
 	GDUNS = [],
 	productFamily = [ // this is the full list available from within Ops Console
@@ -69,6 +68,10 @@ var ECSconfig = {
   s3ForcePathStyle: true,
   endpoint: new AWS.Endpoint('http://10.4.44.125:9020')
 };
+
+
+
+// TO DO: DE-COUPLE GDUNS LIST AND FEED THIS APP 1 GDUN AT A TIME FROM ANOTHER APP VIA MESSAGE QUEUE
 
 
 // launch the process
@@ -148,6 +151,8 @@ function cycleThru() {
 									var dataPayload = JSON.parse(data.Body);
 									console.log('dataPayload.rows.length = ' + dataPayload.rows.length);
 									insight = getCount(product, dataPayload); 
+									data = null; // free up memory
+									dataPayload = null; // free up memory
 									callback(); // callback <<B1.1>>
 								}
 							});
@@ -187,6 +192,7 @@ function cycleThru() {
 									console.log('posted to s3 as: ' + gdun + '.' + productKey);								
 									var eTag = JSON.parse(data.ETag);
 									console.log('data.ETag = ' + JSON.parse(data.ETag));
+									data = null; // free up memory
 									callback(); // callback <<B1.2>> 
 								}						
 							});
@@ -197,7 +203,6 @@ function cycleThru() {
 						console.log('<<<<<<<<<<<<<<<<<<<<<  B SERIES COMPLETE  >>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 						if (err) console.log('Error processing GDUN=' + gdun + ': ' + err);
 						gdunFromList = gdun;
-						productFromList = product;
 						console.log('successfully processed GDUN ' + gdun + ' for product = ' + product);
 						callback(); //callback <<B1>>
 					});
@@ -252,6 +257,7 @@ function getCount(productFamily, installBaseData) {
 		}
 	}
 	console.log('system count = ' + count);
+	installBaseData = null; // free up memory
 	return count;
 }
 
