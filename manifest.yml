@@ -1,8 +1,8 @@
 ---
 applications:
 - name: munger1
-  memory: 200MB
-  disk_quota: 200MB
+  memory: 1G
+  disk_quota: 500MB
   domain: bellevuelab.isus.emc.com
   no-route: true
-  command: node app.js
+  command: node app-min.js
