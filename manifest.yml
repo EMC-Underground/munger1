@@ -5,4 +5,4 @@ applications:
   disk_quota: 500MB
   domain: bellevuelab.isus.emc.com
   no-route: true
-  command: node app.js
+  command: node app2.js
