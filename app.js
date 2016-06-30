@@ -209,7 +209,7 @@ function storeInsight(product, gdun, insightToStore, callback) {
 	
 	// put the data in the s3 bucket
 	var s3params = {
-			Bucket: 'emcalexa',
+			Bucket: 'munger-insights',
 			Key: gdun + '.' + productKey,
 			Body: JSON.stringify(insightBody),
 			ContentType: 'json'
