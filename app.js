@@ -15,7 +15,8 @@ object store which hosts EMC field inventory info in JSON format. It then:
 - It then stores the result in a lightweight sanitized JSON format in s3.
 
 The result is a list of objects (number of objects = number of GDUNS x number of Product Families) stored in s3.
-The name format used is <GDUN>.<Product Family>. The insight is stored under <GDUN>.<Product Family>.key1
+The name format used is <GDUN>.<Product Family Suffix Code>. 
+The insight is stored under <GDUN>.<Product Family Suffix Code>.answer
 
 The objects can then be queried by front end apps like an Alexa Skill to return answers to questions like:
 'How many VNXs does CustomerXYZ have?'
@@ -194,23 +195,17 @@ function getIBdata(product, gdun, callback) {
 	});	
 }
 
-
 // This function stores the insight in s3
 function storeInsight(product, gdun, insightToStore, callback) {	
 	// create JSON formatted object body to store
 	var insightBody = {
-	  "key1": insightToStore.toString()
+	  "answer": insightToStore.toString()
 	}			
-	var productKey = product;
-	
-	if (productKey == 'VNX/VNXe Family') {
-		productKey = 'VNX';
-	}
-	
+		
 	// put the data in the s3 bucket
 	var s3params = {
 			Bucket: 'munger-insights',
-			Key: gdun + '.' + productKey,
+			Key: gdun + '.' + product.suffixCode,
 			Body: JSON.stringify(insightBody),
 			ContentType: 'json'
 		};	
@@ -220,7 +215,7 @@ function storeInsight(product, gdun, insightToStore, callback) {
 			callback(err); // this is the  callback saying this storeInsight function is complete but with error							
 		} else { 
 			// successful response	
-			console.log('posted to s3 as: ' + gdun + '.' + productKey);								
+			console.log('posted to s3 as: ' + gdun + '.' + product.suffixCode);								
 			var eTag = JSON.parse(data.ETag);
 			data = null; // free up memory
 			callback(null, eTag); // this is the  callback saying this storeInsight function is complete
@@ -231,10 +226,10 @@ function storeInsight(product, gdun, insightToStore, callback) {
 
 // This function returns the insight to the calling function. The insight is a count of the number of systems of a given
 // type of 'INSTANCE_PRODUCT_FAMILY' found in the IB JSON of a given customer GDUN.
-function extractInsight(productFamily, installBaseData) {
+function extractInsight(product, installBaseData) {
 	var count = 0;
 	for (var i = 0; i < installBaseData.rows.length; i++) {
-		if (installBaseData.rows[i].INSTANCE_PRODUCT_FAMILY == productFamily) {
+		if (installBaseData.rows[i].INSTANCE_PRODUCT_FAMILY == product.OpsConsoleName) {
 			count++;
 		}
 	}
@@ -244,19 +239,20 @@ function extractInsight(productFamily, installBaseData) {
 
 // This function returns a list of all the 'INSTANCE_PRODUCT_FAMILY' options as an array to the calling function
 function getProductFamily() {
-	var	productFamily = [ // this is the full list available from within Ops Console
+	
+	//var	productFamily = [ // this is the full list available from within Ops Console
 		// 'AVALON'
 		// 'ApplicationXtender Products'
 		// 'Atmos'
 		// 'Avamar'
-		   'CLARiiON',
+		// 'CLARiiON',
 		// 'Captiva Products'
-		   'Celerra',
-		   'Centera',
-		   'CloudArray',
+		// 'Celerra',
+		// 'Centera',
+		// 'CloudArray',
 		// 'Connectrix'
 		// 'DSSD'
-		   'Data Domain',
+		// 'Data Domain',
 		// 'Data Protection Advisor Family'
 		// 'Disk Library'
 		// 'DiskXtender'
@@ -278,26 +274,61 @@ function getProductFamily() {
 		// 'PowerPath'
 		// 'RSA'
 		// 'Rainfinity'
-		   'RecoverPoint',
+		// 'RecoverPoint',
 		// 'Retrospect'
-		   'ScaleIO Family',
+		// 'ScaleIO Family',
 		// 'Smarts'
 		// 'SourceOne'
-		   'Symmetrix',
+		// 'Symmetrix',
 		// 'Symmetrix Enginuity'
 		// 'UN'
-		   'Unity Family',
-		   'VMAX Family',
+		//   'Unity Family',
+		//   'VMAX Family',
 		// 'VMware'
-		   'VNX/VNXe Family',
-		   'VPLEX Series',
+		//   'VNX/VNXe Family',
+		//   'VPLEX Series',
 		// 'VSI Plugin Series for VMware vCenter'
 		// 'VSPEX BLUE Appliance'
 		// 'ViPR Family'
 		// 'Watch4Net Family'
 		// 'WysDM'
-		   'Xtrem'
-	];
+		//   'Xtrem'
+	//];
+	
+	var	productFamily = [] // this is the mapping for each product
 
+	productFamily.push(
+		//{ItemName: "ATMOS", OpsConsoleName:"Atmos", suffixCode:"1"},
+		{ItemName: "AVAMAR", OpsConsoleName:"Avamar", suffixCode:"2"},
+		{ItemName: "CLARIION", OpsConsoleName:"CLARiiON", suffixCode:"3"},
+		//{ItemName: "CAPTIVA", OpsConsoleName:"Captiva Products", suffixCode:"4"},
+		{ItemName: "CELERRA", OpsConsoleName:"Celerra", suffixCode:"5"},
+		{ItemName: "CENTERA", OpsConsoleName:"Centera", suffixCode:"6"},
+		//{ItemName: "CLOUDARRAY", OpsConsoleName:"CloudArray", suffixCode:"7"},
+		{ItemName: "CONNECTRIX", OpsConsoleName:"Connectrix", suffixCode:"8"},
+		{ItemName: "DSSD", OpsConsoleName:"DSSD", suffixCode:"9"},
+		{ItemName: "DATADOMAIN", OpsConsoleName:"Data Domain", suffixCode:"10"},
+		//{ItemName: "DOCUMENTUM", OpsConsoleName:"Documentum", suffixCode:"11"},
+		{ItemName: "ESRS", OpsConsoleName:"EMC Secure Remote Services", suffixCode:"12"},
+		//{ItemName: "ECS", OpsConsoleName:"Elastic Cloud Storage", suffixCode:"13"},
+		//{ItemName: "GREENPLUM", OpsConsoleName:"Greenplum", suffixCode:"14"},
+		{ItemName: "ISILON", OpsConsoleName:"Isilon", suffixCode:"15"},
+		//{ItemName: "NETWORKER", OpsConsoleName:"NetWorker Family", suffixCode:"16"},
+		//{ItemName: "PIVOTAL", OpsConsoleName:"Pivotal", suffixCode:"17"},
+		{ItemName: "POWERPATH", OpsConsoleName:"PowerPath", suffixCode:"18"},
+		//{ItemName: "RSA", OpsConsoleName:"RSA", suffixCode:"19"},
+		{ItemName: "RECOVERPOINT", OpsConsoleName:"RecoverPoint", suffixCode:"20"},
+		//{ItemName: "SCALEIO", OpsConsoleName:"ScaleIO Family", suffixCode:"21"},
+		//{ItemName: "SMARTS", OpsConsoleName:"Smarts", suffixCode:"22"},
+		//{ItemName: "SOURCEONE", OpsConsoleName:"SourceOne", suffixCode:"23"},
+		{ItemName: "SYMMETRIX", OpsConsoleName:"Symmetrix", suffixCode:"24"},
+		{ItemName: "UNITY", OpsConsoleName:"Unity Family", suffixCode:"25"},
+		{ItemName: "VMAX", OpsConsoleName:"VMAX Family", suffixCode:"26"},
+		{ItemName: "VNX", OpsConsoleName:"VNX/VNXe Family", suffixCode:"27"},
+		{ItemName: "VPLEX", OpsConsoleName:"VPLEX Series", suffixCode:"28"},
+		//{ItemName: "VSPEXBLUE", OpsConsoleName:"VSPEX BLUE Appliance", suffixCode:"29"},
+		//{ItemName: "VIPR", OpsConsoleName:"ViPR Family", suffixCode:"30"},
+		{ItemName: "XTREMIO", OpsConsoleName:"Xtrem", suffixCode:"32"} );
+	
 	return(productFamily)
 }
