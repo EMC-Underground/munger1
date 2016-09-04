@@ -131,8 +131,16 @@ function cycleThru() {
 					callback(); // this is the callback saying this function is complete
 				}			
             });
-        },		
-    ], function(err) {		
+        }	
+    ], function(err) {	
+		if (err) {
+			console.log('Full cycle likely not complete, error: ' + err);
+		} else {
+			console.log('Full cycle completed successfully');
+		}
+		var datetime = new Date();
+		console.log('Cycle ended on: ' + datetime);	
+		console.log('now waiting 24 hrs before starting cycle again...');
 		//restart the whole cycle again from the top after wait time
 		setTimeout(function() {
 			cycleThru();
@@ -175,22 +183,24 @@ function getCustomerList(source, callback) {
 // This function takes the list of all 'thingToCount' items and for each one, it
 // launches the 'processGDUN' function.
 function processThingToCount(GDUNlist, callback) {
-	console.log('entering processParam1 function');
+	console.log('entering processThingToCount function');
 	var thingToCountList = getThingToCountList();
 	
 	async.forEachSeries(thingToCountList, function(thingToCountItem, callback) {
 
 		processGDUN(thingToCountItem, GDUNlist, function(err) {             
 			if (err) {
-				callback(err); // this is the callback saying this function is complete but with error
-			} else {
-				callback(); // this is the callback saying this function is complete
+				console.log('An error came back from processGDUN which processes all GDUNs for a given thingToCountItem')
+				console.log('The thingToCountItem was: ' + '\n' + JSON.stringify(thingToCountItem));
+				callback(err)
+			} else {			
+			callback(); // this is the callback saying this function is complete
 			}			
-		});			
+		});
 	
 	}, 	function(err) {
 			if (err) return callback(err);
-			callback(); // this is the callback saying all items in the async.forEach are completed
+			callback(); // this is the callback saying all items in the async.forEachSeries are completed
 	});
 }
 		
@@ -198,50 +208,54 @@ function processThingToCount(GDUNlist, callback) {
 // pulling the install base data from ECS for each GDUN, extracting the system count for each (for example: how many systems at CustomerXYZ).
 // It then stores the result in a lightweight sanitized JSON format in s3.	
 function processGDUN(thingToCountItem, GDUNlist, callback) {
-	async.forEachSeries(GDUNlist, function(gdun, callback) {
+	async.forEachSeries(GDUNlist, function(gdun, callback3) {
 		var insightToStore;
 
 		async.series([
 		
 			// Pull install base data from ECS 
-			function(callback) {
+			function(callback1) {
 				getIBdata(thingToCountItem, gdun, function(err, insight) {
 					if (err) {
-						console.log('Error getting install base data for GDUN=' + gdun + ': ' + err);
-						callback(err); // this is the task callback saying this function is complete but with an error;	
+						console.log('\n' + '*****************************************')
+						console.log('Error getting install base data for GDUN=' + gdun + ': ' + err + '\n');
+						callback1(err); // this is the task callback saying this function is complete but with an error;	
 					} else {
 						insightToStore = insight;
-						callback(); // this is the task callback saying this function is complete;					
+						callback1(); // this is the task callback saying this function is complete;					
 					}
 				});
 			},
 			
 			// Store the resulting insight in s3
-			function(callback) {
+			function(callback2) {
 				storeInsight(thingToCountItem, gdun, insightToStore, function(err, eTag) {
-					if (err) return callback(err); // task callback saying this function is complete but with an error, return prevents double callback
-					callback(); // this is the task callback saying this function is complete;
+					if (err) return callback2(err); // task callback saying this function is complete but with an error, return prevents double callback
+					callback2(); // this is the task callback saying this function is complete;
 				});
-			}				
+			}						
 			
 		], function(err) { // this function gets called after the two tasks have called their "task callbacks"
 			if (err) {
-				callback(err); // this is the callback saying this run-thru of the series is complete for a given gdun in the async.forEach but with error
+				console.log('moving on to the next GDUN after error on the previous...')
+				callback3(); // this is the callback saying this run-thru of the series is complete for a given gdun in the async.forEach but with error
 			} else {
-				callback(); // this is the callback saying this run-thru of the series is complete for a given gdun in the async.forEach 				
+				callback3(); // this is the callback saying this run-thru of the series is complete for a given gdun in the async.forEach 				
 			}
 		});						
 	
 	}, 	function(err) {
-			if (err) return callback(err);
+			if (err) {
+				return callback(err)
+			};
 			callback(); // this is the callback saying all items in the async.forEach are completed
 	});
-}	
+}
 
 // This function pulls the install base data for a given GDUN, calls the function to extract the insight, and then provides the insight 
 // in a callback to the calling function.
 function getIBdata(thingToCountItem, gdun, callback) {
-	console.log('entering getIBdata function');
+	//console.log('entering getIBdata function');
 	console.log('GDUN = ' + gdun);
 	console.log('thingToCountItem = ' + JSON.stringify(thingToCountItem));
 	var key = gdun + '.json';
