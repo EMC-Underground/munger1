@@ -35,8 +35,8 @@ function getThingToCountList() {
 	thingToCountList.push(
 	
 /***************************************************************************************************************/
-//Put the different items within thingToCount here
-	
+//Put the different items within thingToCount here 
+
 //		{ItemName: "ATMOS", 		OpsConsoleName:"Atmos", 						suffixCode:"1"},
 		{ItemName: "AVAMAR", 		OpsConsoleName:"Avamar", 						suffixCode:"2"},
 		{ItemName: "CLARIION", 		OpsConsoleName:"CLARiiON", 						suffixCode:"3"},
@@ -67,7 +67,7 @@ function getThingToCountList() {
 		{ItemName: "VPLEX", 		OpsConsoleName:"VPLEX Series", 					suffixCode:"28"},
 //		{ItemName: "VSPEXBLUE", 	OpsConsoleName:"VSPEX BLUE Appliance", 			suffixCode:"29"},
 		{ItemName: "VIPR", 			OpsConsoleName:"ViPR Family", 					suffixCode:"30"},
-		{ItemName: "XTREMIO", 		OpsConsoleName:"Xtrem", 						suffixCode:"32"} 
+		{ItemName: "XTREMIO", 		OpsConsoleName:"Xtrem", 						suffixCode:"32"} 	
 		
 /***************************************************************************************************************/
 
@@ -208,6 +208,14 @@ function processThingToCount(GDUNlist, callback) {
 // pulling the install base data from ECS for each GDUN, extracting the system count for each (for example: how many systems at CustomerXYZ).
 // It then stores the result in a lightweight sanitized JSON format in s3.	
 function processGDUN(thingToCountItem, GDUNlist, callback) {
+	
+	var	top3Customers = [] // this is an array of the top 3 customers for this particular thingToCountItem (VNX, ViPR, etc)
+
+	top3Customers.push(	
+		{C: "TBD", N:0},
+		{C: "TBD", N:0},		
+		{C: "TBD", N:0}	)	
+		
 	async.forEachSeries(GDUNlist, function(gdun, callback3) {
 		var insightToStore;
 
@@ -222,6 +230,41 @@ function processGDUN(thingToCountItem, GDUNlist, callback) {
 						callback1(err); // this is the task callback saying this function is complete but with an error;	
 					} else {
 						insightToStore = insight;
+
+						if (insight > top3Customers[0].N) {
+							
+							// the old 2nd place is now pushed to 3rd place
+							top3Customers[2].C 	= top3Customers[1].C
+							top3Customers[2].N 	= top3Customers[1].N							
+							
+							// the old first place is now pushed to 2nd place
+							top3Customers[1].C 	= top3Customers[0].C
+							top3Customers[1].N 	= top3Customers[0].N							
+							
+							// first place is now this new customer GDUN
+							top3Customers[0].C  = gdun
+							top3Customers[0].N 	= insight							
+
+						} else if (insight > top3Customers[1].N) {
+							
+							// the old 2nd place is now 3rd place
+							top3Customers[2].C 	= top3Customers[1].C
+							top3Customers[2].N 	= top3Customers[1].N								
+
+							// 2nd place is now this new customer GDUN
+							top3Customers[1].C 	= gdun
+							top3Customers[1].N 	= insight							
+													
+						} else if (insight > top3Customers[2].N) {
+
+							// 3rd place is now this new customer GDUN
+							top3Customers[2].C 	= gdun
+							top3Customers[2].N 	= insight						
+						}
+																			
+						//console.log('Top 3 List now: ');
+						//console.log( JSON.stringify(top3Customers) );
+																										
 						callback1(); // this is the task callback saying this function is complete;					
 					}
 				});
@@ -238,17 +281,25 @@ function processGDUN(thingToCountItem, GDUNlist, callback) {
 		], function(err) { // this function gets called after the two tasks have called their "task callbacks"
 			if (err) {
 				console.log('moving on to the next GDUN after error on the previous...')
-				callback3(); // this is the callback saying this run-thru of the series is complete for a given gdun in the async.forEach but with error
-			} else {
-				callback3(); // this is the callback saying this run-thru of the series is complete for a given gdun in the async.forEach 				
-			}
+			}			
+			callback3();			 				
 		});						
 	
 	}, 	function(err) {
 			if (err) {
 				return callback(err)
-			};
-			callback(); // this is the callback saying all items in the async.forEach are completed
+			} else {
+				// We are done with all of the GDUNs for this particular thingToCountItem, so now store the top 3 customers for it
+				console.log('storing the top 3 customers for ' + thingToCountItem.ItemName)
+				gdun = 'top3'
+				storeInsight(thingToCountItem, gdun, top3Customers, function(err, eTag) {
+					if (err) {
+						callback(err); // task callback saying this function is complete but with an error
+					} else {
+						callback(); // this is the callback saying this run-thru of the series is complete for a given gdun in the async.forEachSeries
+					}
+				});					
+			}
 	});
 }
 
@@ -273,7 +324,6 @@ function getIBdata(thingToCountItem, gdun, callback) {
 			//console.log(data.Body.toString()); // note: Body is outputted as type buffer which is an array of bytes of the body, hence toString() 
 			
 			try {
-				var dataPayload = JSON.parse(data.Body) // converts data.Body to a string replacing the array of bytes				
 				var dataPayload = JSON.parse(data.Body) // converts data.Body to a string replacing the array of bytes
 				var payloadObject = JSON.parse(dataPayload); // converts data.Body back to an object 
 				
@@ -287,6 +337,7 @@ function getIBdata(thingToCountItem, gdun, callback) {
 					callback(null, insight); // this is the  callback saying this getIBdata function is complete;	
 				}												
 			} catch (e) {
+				console.log('There was an error: ' + e)
 				callback('unexpected install base JSON format in ' + key);
 			}
 		}
@@ -296,10 +347,17 @@ function getIBdata(thingToCountItem, gdun, callback) {
 // This function stores the insight in s3
 function storeInsight(thingToCountItem, gdun, insightToStore, callback) {
 	//console.log('entering storeInsight function');
-	// create JSON formatted object body to store
-	var insightBody = {
-	  "answer": insightToStore.toString()
-	}			
+	if ( typeof insightToStore === 'object' ) { // the incoming insightToStore is the object storing the top 3 customers for a given product
+		var insightBody = insightToStore
+		console.log('GDUN for #1 customer = ' + insightBody[0].C)
+		console.log('number installed for #1 customer = ' + insightBody[0].N)		
+	} else { // the incoming insightToStore is a number, which needs to be wrapped into a object format
+		var answer = insightToStore.toString()	
+		// create JSON formatted object body to store
+		var insightBody = {
+		  "answer": answer
+		}		
+	}
 		
 	// put the data in the s3 bucket
 	var s3params = {
@@ -321,7 +379,6 @@ function storeInsight(thingToCountItem, gdun, insightToStore, callback) {
 		}						
 	});
 }
-
 
 // This function returns the insight to the calling function. The insight is a count of the number of systems of a given
 // type of 'thingToCount' found in the IB JSON of a given customer GDUN.
