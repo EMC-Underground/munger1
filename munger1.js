@@ -88,7 +88,7 @@ var AWS = require( "aws-sdk" ),
 // setup ECS config to point to Bellevue lab 
 var ECSconfig = {
   s3ForcePathStyle: true,
-  endpoint: new AWS.Endpoint('http://10.5.208.12:9020')
+  endpoint: new AWS.Endpoint('http://10.5.208.212:9020') // store to node 1 of 4 node cluster
 };
 ECS.config.loadFromPath(__dirname + '/ECSconfig.json');
 var ecs = new ECS.S3(ECSconfig);
