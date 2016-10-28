@@ -1,0 +1,30 @@
+
+{
+    "services": {
+		
+		"aws-creds-service": [
+			{
+				"name": "aws-creds-service",
+				"label": "user-provided",
+				"credentials": {
+					"region": "us-west-2",
+					"accessKeyId": "AKIAIHCRFTVQGLG3MOEA",
+					"secretAccessKey": "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"
+				}
+
+			}
+		],
+
+		"ecs-creds-service": [
+			{
+				"name": "ecs-creds-service",
+				"label": "user-provided",
+				"credentials": {
+					"accessKeyId": "dana",
+					"secretAccessKey": "Mp1YKJefqZbWsgYLg1NjNXeTMThF42h5yJ81EyeM"
+				}
+			}
+		]	
+		
+	}
+}

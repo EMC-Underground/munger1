@@ -83,22 +83,44 @@ function getThingToCountList() {
 
 var AWS = require( "aws-sdk" ),
 	ECS = require( "aws-sdk" ),
+	cfenv = require("cfenv"),
 	async = require( "async" );
-		
+	
+// try and set the vcap from a local file, if it fails, appEnv will be set to use
+// the PCF user provided service specified with the getServiceCreds call
+var localVCAP  = null	
+try {
+	localVCAP = require("./local-vcap.json")
+	console.log('localVCAP = ' + JSON.stringify(localVCAP) );
+	} catch(e) {}
+	
+var appEnv = cfenv.getAppEnv({vcap: localVCAP}) // vcap specification is ignored if not running locally
+console.log('appEnv = ' + JSON.stringify(appEnv) );
+var AWScreds  = appEnv.getServiceCreds('aws-creds-service') || {}
+console.log('AWScreds = ' + JSON.stringify(AWScreds) );
+var ECScreds  = appEnv.getServiceCreds('ecs-creds-service') || {}
+console.log('ECScreds = ' + JSON.stringify(ECScreds) );
+
+var AWSconfig = {
+  region: AWScreds.region,
+  accessKeyId: AWScreds.accessKeyId,
+  secretAccessKey: AWScreds.secretAccessKey
+};
+console.log('AWSconfig = ' + JSON.stringify(AWSconfig) );
+var s3 = new AWS.S3(AWSconfig);
+
 // setup ECS config to point to Bellevue lab 
 var ECSconfig = {
   s3ForcePathStyle: true,
-  endpoint: new AWS.Endpoint('http://10.5.208.212:9020') // store to node 1 of 4 node cluster
+  endpoint: new AWS.Endpoint('http://10.5.208.212:9020'), // store to node 1 of 4 node cluster
+  accessKeyId: ECScreds.accessKeyId,
+  secretAccessKey: ECScreds.secretAccessKey
 };
-ECS.config.loadFromPath(__dirname + '/ECSconfig.json');
+console.log('ECSconfig = ' + JSON.stringify(ECSconfig) );
 var ecs = new ECS.S3(ECSconfig);
 
-var ecsBucket = 'pacnwinstalls',
+var ecsBucket = 'installBase',
 	awsBucket = 'munger-insights';
-
-// setup s3 config
-AWS.config.loadFromPath(__dirname + '/AWSconfig.json');
-var s3 = new AWS.S3();
 
 // launch the Munger1 process
 console.log('starting cycleThru...');
